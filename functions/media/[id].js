@@ -18,11 +18,17 @@ export async function onRequestGet({params,env}){
   try{bytes=fromBase64(result.value)}catch{
     return new Response('Invalid image data',{status:422,headers:{'cache-control':'no-store'}});
   }
-  if(bytes.length<12)return new Response('Invalid image data',{status:422,headers:{'cache-control':'no-store'}});
+  const type=result.metadata?.type;
+  const jpeg=bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
+  const png=bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71;
+  const webp=String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP';
+  const gif=String.fromCharCode(...bytes.slice(0,3))==='GIF';
+  const ico=bytes[0]===0&&bytes[1]===0&&bytes[2]===1&&bytes[3]===0;
+  if(bytes.length<12||!(jpeg||png||webp||gif||ico))return new Response('Invalid image data',{status:422,headers:{'cache-control':'no-store'}});
   return new Response(bytes,{headers:{
-    'content-type':result.metadata?.type||'application/octet-stream',
+    'content-type':type||'application/octet-stream',
     'content-length':String(bytes.byteLength),
-    'cache-control':'public, max-age=120',
+    'cache-control':'no-store',
     'x-content-type-options':'nosniff'
   }});
 }

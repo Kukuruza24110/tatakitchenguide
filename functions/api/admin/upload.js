@@ -29,6 +29,6 @@ export async function onRequestPost({request,env}){
   const id=crypto.randomUUID();
   // KV reliably accepts strings. Explicit Base64 prevents binary-to-"undefined" corruption.
   await env.SITE_KV.put(`img:${id}`,toBase64(b),{metadata:{type,encoding:'base64'}});
-  // Verify stored value before claiming success; caches at the same edge can be eventually consistent.
-  return json({url:`/media/${id}`});
+  // A KV write becoming visible globally can take time; always return a unique URL.
+  return json({url:`/media/${id}`, bytes:b.byteLength, type});
 }
