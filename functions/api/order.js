@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: POST /api/order
 // Credentials must be configured under Pages > Settings > Variables and Secrets.
-const GUIDES = new Set(['Идеальный крем-чиз', 'Макарон без ошибок', 'Торты на заказ', 'Начинки и конфи', 'cream-cheese', 'macarons', 'cakes', 'fillings']);
+
 const escapeHTML = (value) => String(value).replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
@@ -17,8 +17,12 @@ export async function onRequestPost({ request, env }) {
   if (field('website', 200)) return json({ok:true}); // spam trap
   const name=field('name',100), phone=field('phone',60), email=field('email',160),
     messenger=field('messenger',160) || field('telegram',160), guide=field('guide',120), guideTitle=field('guideTitle',120);
-  if (!name || !phone || !email || !messenger || !GUIDES.has(guide) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!name || !phone || !email || !messenger || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(guide) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return json({error:'Проверьте заполнение полей'},400);
+  if (env.SITE_KV) {
+    const catalog = await env.SITE_KV.get('catalog','json');
+    if (catalog && !catalog.guides?.[guide]) return json({error:'Гайд не найден'},400);
+  }
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     console.error('Missing Telegram secrets');
     return json({error:'Сервис заявок временно недоступен'},503);

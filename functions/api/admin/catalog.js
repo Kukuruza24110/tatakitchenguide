@@ -1,0 +1,3 @@
+import {json,allowed,sameOrigin,validate} from '../_shared.js';
+export async function onRequestGet({request,env}){if(!await allowed(request,env))return json({error:'Требуется вход'},401);return json({catalog:(await env.SITE_KV.get('catalog','json'))||null});}
+export async function onRequestPut({request,env}){if(!sameOrigin(request)||!await allowed(request,env))return json({error:'Нет доступа'},403);if(Number(request.headers.get('content-length')||0)>200000)return json({error:'Данные слишком большие'},413);let catalog;try{catalog=validate(await request.json())}catch(e){return json({error:e.message},400)};await env.SITE_KV.put('catalog',JSON.stringify(catalog));return json({ok:true});}

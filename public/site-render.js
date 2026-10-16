@@ -1,47 +1,21 @@
-document.addEventListener("DOMContentLoaded", () => {
-/* Данные из site-data.js. Отображение не затрагивает отправку заказов. */
-(function(){
-  const config=window.SITE_DATA;
-  if(!config) return;
-  const setText=(root,selector,value)=>{const el=root.querySelector(selector);if(el && value!==undefined)el.textContent=value;};
-  const success=document.querySelector('#orderSuccessView');
-  if(success){setText(success,'h3',config.success.title);setText(success,'p',config.success.message);}
-  const slug=document.body.dataset.guide;
-  const image=(holder,file,prefix,alt)=>{
-    if(!holder || !file)return;
-    const img=holder.querySelector('img') || document.createElement('img');
-    img.alt=alt; img.loading='lazy'; img.src=prefix+file;
-    img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';
-    img.addEventListener('load',()=>{holder.classList.remove('no-image'); if(holder.classList.contains('photo-placeholder')){holder.classList.remove('photo-placeholder');holder.style.display='block';} });
-    img.addEventListener('error',()=>{if(holder.classList.contains('detail-photo'))holder.classList.add('no-image');else img.remove();});
-    if(!img.parentNode)holder.prepend(img);
-    const small=holder.querySelector('small');if(small)small.textContent='images/'+file;
-  };
-  if(slug){
-    const guide=config.guides[slug]; if(!guide)return;
-    document.title=guide.title+' — Тата Анастасия';
-    setText(document,'.detail-hero .eyebrow',guide.kind);
-    setText(document,'.detail-hero h1',guide.title);
-    setText(document,'.detail-hero .detail-intro',guide.description);
-    document.querySelectorAll('.detail-price').forEach(el=>el.textContent=guide.price);
-    setText(document,'.detail-purchase p',guide.title);
-    const list=document.querySelector('.detail-list');
-    if(list){list.replaceChildren();guide.contents.forEach(item=>{const li=document.createElement('li');li.textContent=item;list.append(li);});}
-    document.querySelectorAll('.detail-photo').forEach((holder,i)=>image(holder,guide.images[i],'../images/',guide.title+' — фото '+(i+1)));
-    // Значение поля формы задаётся в существующем обработчике openModal.
-    // Синхронизируем его с текущим названием гайда без изменения логики формы.
-    document.querySelectorAll('.buy-guide').forEach(btn=>btn.addEventListener('click',()=>{
-      const field=document.getElementById('orderGuide');if(field)field.value=guide.title;
-    }));
-  }else{
-    document.querySelectorAll('.recipe-card').forEach((card,i)=>{
-      const slug=Object.keys(config.guides)[i],guide=config.guides[slug];if(!guide)return;
-      setText(card,'.recipe-card-kind',guide.kind);setText(card,'h3',guide.title);
-      setText(card,'.recipe-card-body > p',guide.description);setText(card,'.price',guide.price);
-      const anchor=card.querySelector('.recipe-card-media');
-      if(anchor){anchor.setAttribute('aria-label','Подробнее: '+guide.title);image(anchor,guide.images[0],'images/',guide.title);}
-    });
-  }
+/* Каталог из Cloudflare KV; при первом запуске используется встроенный каталог. */
+(async function(){
+let data=window.SITE_DATA;
+try{const r=await fetch('/api/catalog',{cache:'no-store'});if(r.ok){const v=await r.json();if(v.catalog)data=v.catalog;}}catch(e){console.warn('Каталог: резервные данные',e)}
+if(!data)return;
+window.SITE_DATA=data;
+if(data.favicon){let f=document.querySelector('link[rel="icon"]');if(!f){f=document.createElement('link');f.rel='icon';document.head.append(f)}f.href=data.favicon.startsWith('/')?data.favicon:'/images/'+data.favicon;}
+const succ=document.getElementById('orderSuccessView');if(succ){const h=succ.querySelector('h3'),p=succ.querySelector('p');if(h)h.textContent=data.success?.title||'Заявка принята';if(p)p.textContent=data.success?.message||'Спасибо за заявку!';}
+const path=location.pathname;const detail=path.startsWith('/guides/');const slug=path.endsWith('/guide.html')?new URLSearchParams(location.search).get('id'):document.body.dataset.guide;
+const url=(file,prefix)=>!file?'':file.startsWith('/')?file:prefix+file;
+const img=(target,file,prefix,title)=>{if(!target)return;target.replaceChildren();if(!file){target.textContent='Фото скоро появится';return;}const i=document.createElement('img');i.alt=title;i.loading='lazy';i.src=url(file,prefix);i.style.cssText='width:100%;height:100%;object-fit:cover;display:block';i.onerror=()=>{i.remove();target.textContent='Фото скоро появится';};target.append(i);target.classList.remove('photo-placeholder','no-image');target.style.display='block';};
+if(detail){const g=data.guides?.[slug];if(!g){const main=document.querySelector('main');if(main)main.innerHTML='<div class="wrap" style="padding:80px 20px"><h1>Гайд не найден</h1><a href="/#products">Вернуться ко всем гайдам</a></div>';return;}
+document.body.dataset.guide=slug;document.title=g.title+' — Тата Анастасия';
+const set=(s,v)=>{const x=document.querySelector(s);if(x)x.textContent=v||'';};
+set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-hero .detail-intro',g.description);set('.detail-purchase p',g.title);document.querySelectorAll('.detail-price').forEach(x=>x.textContent=g.price);const list=document.querySelector('.detail-list');if(list){list.replaceChildren();(g.contents||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;list.append(li)})}document.querySelectorAll('.detail-photo').forEach((x,i)=>img(x,(g.images||[])[i],'../images/',g.title));
+}else{
+const grid=document.querySelector('.card-grid');if(!grid)return;grid.replaceChildren();Object.entries(data.guides||{}).forEach(([slug,g],idx)=>{const article=document.createElement('article');article.className='recipe-card';const number=document.createElement('span');number.className='recipe-card-num';number.textContent='№ '+String(idx+1).padStart(2,'0');article.append(number);
+const link=document.createElement('a');link.className='recipe-card-media photo-placeholder';link.href='/guides/guide.html?id='+encodeURIComponent(slug);link.setAttribute('aria-label','Подробнее: '+g.title);img(link,g.images?.[0],'images/',g.title);article.append(link);
+const body=document.createElement('div');body.className='recipe-card-body';const kind=document.createElement('span');kind.className='recipe-card-kind';kind.textContent=g.kind;const h=document.createElement('h3');h.textContent=g.title;const p=document.createElement('p');p.textContent=g.description;const footer=document.createElement('div');footer.className='recipe-card-footer';const price=document.createElement('span');price.className='price';price.textContent=g.price;const more=document.createElement('a');more.className='btn btn-small btn-primary';more.href=link.href;more.textContent='Подробнее';footer.append(price,more);body.append(kind,h,p,footer);article.append(body);grid.append(article);});
+}
 })();
-
-});
