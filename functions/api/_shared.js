@@ -2,7 +2,7 @@ export const json=(data,status=200)=>new Response(JSON.stringify(data),{status,h
 export function sameOrigin(request){const origin=request.headers.get('origin');return !origin || origin===new URL(request.url).origin;}
 const enc=new TextEncoder();
 const hex=bytes=>Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
-async function signature(env,payload){const key=await crypto.subtle.importKey('raw',enc.encode(env.ADMIN_PASSWORD),'HMAC',{hash:'SHA-256'},false,['sign']);return hex(new Uint8Array(await crypto.subtle.sign('HMAC',key,enc.encode(payload))));}
+async function signature(env,payload){const key=await crypto.subtle.importKey('raw',enc.encode(env.ADMIN_PASSWORD),{name:'HMAC',hash:'SHA-256'},false,['sign']);return hex(new Uint8Array(await crypto.subtle.sign('HMAC',key,enc.encode(payload))));}
 export async function allowed(request,env){if(!env.ADMIN_PASSWORD || !env.SITE_KV)return false;const cookie=(request.headers.get('cookie')||'').match(/(?:^|;\s*)tata_admin=([^;]+)/);if(!cookie)return false;const [expiry,hash]=cookie[1].split('.');if(!/^\d{10,15}$/.test(expiry||'')||!hash||Number(expiry)<Date.now())return false;const expected=await signature(env,expiry);if(hash.length!==expected.length)return false;let diff=0;for(let i=0;i<hash.length;i++)diff|=hash.charCodeAt(i)^expected.charCodeAt(i);return diff===0;}
 export async function loginCookie(env){const expiry=String(Date.now()+8*3600*1000);return `tata_admin=${expiry}.${await signature(env,expiry)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800`;}
 export const clean=(v,max=200)=>String(v??'').trim().slice(0,max);
