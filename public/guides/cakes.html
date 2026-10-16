@@ -653,7 +653,7 @@ a.recipe-card-media { display:flex; text-decoration:none; }
 .detail-bottom{text-align:center}.detail-bottom .btn{min-width:220px}
 @media(max-width:760px){.detail-main{padding:24px 0 60px}.detail-hero{grid-template-columns:1fr;gap:26px;margin-bottom:40px}.detail-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.detail-purchase{flex-wrap:wrap}.detail-purchase .btn{width:100%}.detail-hero h1{font-size:clamp(2.15rem,9vw,3.4rem)}}
 @media(max-width:430px){.detail-gallery{grid-template-columns:1fr}.detail-gallery .detail-photo{aspect-ratio:4/3}.header-inner{gap:12px}.brand{font-size:1rem}}
-</style></head><body>
+</style></head><body data-guide="cakes">
 <a class="skip-link" href="#main">К содержимому</a><header class="site-header"><div class="wrap header-inner"><a class="brand" href="../index.html">Тата Анастасия</a><nav class="main-nav" id="mainNav" aria-label="Основная навигация"><a href="../index.html#about">Обо мне</a><a href="../index.html#products">Все гайды</a><a href="../index.html#reviews">Отзывы</a></nav><a class="btn btn-small btn-primary header-cta" href="../index.html#products">Каталог гайдов</a><button class="nav-toggle" id="navToggle" aria-label="Открыть меню" aria-expanded="false" aria-controls="mainNav"><span></span><span></span><span></span></button></div></header>
 <main id="main" class="detail-main"><div class="wrap"><a class="detail-crumb" href="../index.html#products">← Все гайды и рецепты</a>
 <section class="detail-hero"><div><div class="detail-photo"><img src="../images/product-3.jpg" alt="Торты на заказ — фото 1" loading="lazy" onerror="this.parentElement.classList.add('no-image')"><div class="missing-photo"><strong>Фото гайда 1</strong><small>images/product-3.jpg</small></div></div></div><div><p class="eyebrow">Сборник · 10 рецептов</p><h1>Торты на заказ</h1><p class="detail-intro">Десять проверенных сочетаний вкусов для тортов на заказ — от классики до авторских.</p><div class="detail-price">2 990 ₽</div><button type="button" class="btn btn-primary buy-guide">Купить гайд</button></div></section>
@@ -706,15 +706,17 @@ a.recipe-card-media { display:flex; text-decoration:none; }
 
 
 <footer class="site-footer"><div class="wrap footer-inner"><span>© <span id="year"></span> Тата Анастасия</span><a href="../index.html#products">Все гайды</a></div></footer>
+<script src="../site-data.js"></script>
+<script src="../site-render.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
  document.getElementById('year').textContent=new Date().getFullYear();
  const nav=document.getElementById('mainNav'),toggle=document.getElementById('navToggle');toggle.addEventListener('click',()=>{const open=nav.classList.toggle('is-open');toggle.setAttribute('aria-expanded',String(open));});
  const endpoint='/api/order';
  const modal=document.getElementById('orderModal'),form=document.getElementById('orderForm'),note=document.getElementById('orderFormNote'),send=document.getElementById('orderSubmitBtn'),formView=document.getElementById('orderFormView'),success=document.getElementById('orderSuccessView');let previous=null;
- function openModal(){previous=document.activeElement;form.reset();formView.hidden=false;success.hidden=true;note.textContent='';document.getElementById('orderGuide').value="Торты на заказ";modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';document.getElementById('orderName').focus();}
+ function openModal(){previous=document.activeElement;form.reset();formView.hidden=false;success.hidden=true;note.textContent='';document.getElementById('orderGuide').value=(window.SITE_DATA?.guides?.[document.body.dataset.guide]?.title || "Торты на заказ");modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';document.getElementById('orderName').focus();}
  function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';if(previous)previous.focus();}
  document.querySelectorAll('.buy-guide').forEach(b=>b.addEventListener('click',openModal));document.getElementById('orderModalClose').addEventListener('click',closeModal);document.getElementById('orderSuccessClose').addEventListener('click',closeModal);modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('is-open'))closeModal();});
- form.addEventListener('submit',async e=>{e.preventDefault();send.disabled=true;send.textContent='Отправляем…';note.textContent='';try{const values=Object.fromEntries(new FormData(form));const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(values)});if(!res.ok)throw Error('send failed');formView.hidden=true;success.hidden=false;}catch(err){note.textContent='Не получилось отправить заявку. Попробуйте позже.';}finally{send.disabled=false;send.textContent='Отправить заявку';}});
+ form.addEventListener('submit',async e=>{e.preventDefault();send.disabled=true;send.textContent='Отправляем…';note.textContent='';try{const values=Object.fromEntries(new FormData(form));values.guideTitle=values.guide;values.guide=document.body.dataset.guide;const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(values)});if(!res.ok)throw Error('send failed');formView.hidden=true;success.hidden=false;}catch(err){note.textContent='Не получилось отправить заявку. Попробуйте позже.';}finally{send.disabled=false;send.textContent='Отправить заявку';}});
 });
 </script></body></html>

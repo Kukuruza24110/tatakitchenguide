@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: POST /api/order
 // Credentials must be configured under Pages > Settings > Variables and Secrets.
-const GUIDES = new Set(['Идеальный крем-чиз', 'Макарон без ошибок', 'Торты на заказ', 'Начинки и конфи']);
+const GUIDES = new Set(['Идеальный крем-чиз', 'Макарон без ошибок', 'Торты на заказ', 'Начинки и конфи', 'cream-cheese', 'macarons', 'cakes', 'fillings']);
 const escapeHTML = (value) => String(value).replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
   const field = (key, max) => typeof data[key] === 'string' ? data[key].trim().slice(0, max) : '';
   if (field('website', 200)) return json({ok:true}); // spam trap
   const name=field('name',100), phone=field('phone',60), email=field('email',160),
-    messenger=field('messenger',160) || field('telegram',160), guide=field('guide',120);
+    messenger=field('messenger',160) || field('telegram',160), guide=field('guide',120), guideTitle=field('guideTitle',120);
   if (!name || !phone || !email || !messenger || !GUIDES.has(guide) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return json({error:'Проверьте заполнение полей'},400);
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
@@ -25,7 +25,7 @@ export async function onRequestPost({ request, env }) {
   }
   const message = [
     '🧁 <b>Новая заявка с сайта</b>', '',
-    `📖 <b>Гайд:</b> ${escapeHTML(guide)}`,
+    `📖 <b>Гайд:</b> ${escapeHTML(guideTitle || guide)}`,
     `👤 <b>Имя:</b> ${escapeHTML(name)}`,
     `📞 <b>Телефон:</b> ${escapeHTML(phone)}`,
     `✉️ <b>Email:</b> ${escapeHTML(email)}`,
