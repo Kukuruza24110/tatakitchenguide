@@ -942,11 +942,7 @@ a.recipe-card-media { display:flex; text-decoration:none; }
   </main>
 
 <!-- ===================== МОДАЛЬНОЕ ОКНО ЗАЯВКИ ===================== -->
-<!-- ВНИМАНИЕ: чтобы заявки реально приходили вам на почту, укажите свой
-     серверную функцию /api/order (см. TELEGRAM-SETUP.md)
-     ниже в <script src="site-data.js"></script>
-<script src="site-render.js"></script>
-<script>. Подробности — в README.md, раздел «Форма заявки». -->
+<!-- Заявки отправляются через серверную функцию /api/order. -->
 <div class="modal-overlay" id="orderModal" aria-hidden="true">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
     <button type="button" class="modal-close" id="orderModalClose" aria-label="Закрыть">&times;</button>
@@ -998,6 +994,8 @@ a.recipe-card-media { display:flex; text-decoration:none; }
   </div>
 </footer>
 
+<script src="/site-data.js"></script>
+<script src="/site-render.js"></script>
 <script>
 // =========================================================
 // Тата Анастасия — базовое поведение сайта
