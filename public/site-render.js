@@ -17,7 +17,23 @@ const img=(target,file,prefix,title)=>{if(!target)return;target.replaceChildren(
 if(detail){const g=data.guides?.[slug];if(!g){const main=document.querySelector('main');if(main)main.innerHTML='<div class="wrap" style="padding:80px 20px"><h1>Гайд не найден</h1><a href="/#products">Вернуться ко всем гайдам</a></div>';document.body.classList.add('guide-ready');return;}
 document.body.dataset.guide=slug;document.title=g.title+' — Тата Анастасия';
 const set=(s,v)=>{const x=document.querySelector(s);if(x)x.textContent=v||'';};
-set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-hero .detail-intro',g.description);set('.detail-purchase p',g.title);document.querySelectorAll('.detail-price').forEach(x=>x.textContent=g.price);const list=document.querySelector('.detail-list');if(list){list.replaceChildren();(g.contents||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;list.append(li)})}document.querySelectorAll('.detail-photo').forEach((x,i)=>img(x,(g.images||[])[i],'../images/',g.title));document.body.classList.add('guide-ready');
+set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-hero .detail-intro',g.description);set('.detail-purchase p',g.title);document.querySelectorAll('.detail-price').forEach(x=>x.textContent=g.price);const list=document.querySelector('.detail-list');if(list){list.replaceChildren();(g.contents||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;list.append(li)})}// Первое изображение — большое фото; остальные — динамическая галерея без лимита в 3 кадра.
+const photos=Array.isArray(g.images)?g.images.filter(Boolean):[];
+const mainPhoto=document.querySelector('.detail-hero .detail-photo');
+img(mainPhoto,photos[0],'../images/',g.title+' — главное фото');
+const gallery=document.querySelector('.detail-gallery');
+if(gallery){
+  gallery.replaceChildren();
+  photos.slice(1).forEach((src,index)=>{
+    const frame=document.createElement('div');
+    frame.className='detail-photo';
+    img(frame,src,'../images/',g.title+' — фото '+(index+2));
+    gallery.append(frame);
+  });
+  const section=gallery.closest('.detail-section');
+  if(section)section.hidden=photos.length<=1;
+}
+document.body.classList.add('guide-ready');
 }else{
 const grid=document.querySelector('.card-grid');if(!grid)return;grid.replaceChildren();Object.entries(data.guides||{}).forEach(([slug,g],idx)=>{const article=document.createElement('article');article.className='recipe-card';const number=document.createElement('span');number.className='recipe-card-num';number.textContent='№ '+String(idx+1).padStart(2,'0');article.append(number);
 const link=document.createElement('a');link.className='recipe-card-media photo-placeholder';link.href=legacySlugs[slug+'.html']?'/guides/'+encodeURIComponent(slug)+'.html':'/guides/guide.html?id='+encodeURIComponent(slug);link.setAttribute('aria-label','Подробнее: '+g.title);img(link,g.images?.[0],'images/',g.title);article.append(link);
@@ -30,7 +46,7 @@ const text=(sel,val)=>{const e=document.querySelector(sel);if(e&&val!==undefined
 text('.brand-text',home.brand);if(home.browserTitle&&!detail)document.title=home.browserTitle;
 const meta=document.querySelector('meta[name="description"]');if(meta&&home.metaDescription)meta.content=home.metaDescription;
 if(!detail){
-text('.hero .eyebrow',home.heroEyebrow);text('.hero h1',home.heroTitle);text('.hero-lede',home.heroText);text('.hero-card-tag span:last-child',home.heroTag);
+text('.hero .eyebrow',home.heroEyebrow);text('.hero h1',home.heroTitle);text('.hero-lede',home.heroText);
 text('.about .display-lg',home.aboutHeading);text('.about-text',home.aboutText);
 text('.products .display-lg',home.catalogHeading);text('.products .section-lede',home.catalogText);
 text('.reviews .display-lg',home.reviewsHeading);text('.works .display-lg',home.worksHeading);
