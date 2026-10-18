@@ -21,6 +21,9 @@ set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-
 const photos=Array.isArray(g.images)?g.images.filter(Boolean):[];
 const mainPhoto=document.querySelector('.detail-hero .detail-photo');
 img(mainPhoto,photos[0],'../images/',g.title+' — главное фото');
+// Убираем старую служебную подсказку из всех версий страниц гайдов.
+const oldGalleryHint=document.querySelector('.detail-gallery')?.closest('.detail-section')?.querySelector('.section-lede');
+if(oldGalleryHint && oldGalleryHint.textContent.includes('Добавьте сюда фотографии готовых десертов')) oldGalleryHint.remove();
 const gallery=document.querySelector('.detail-gallery');
 if(gallery){
   gallery.replaceChildren();
