@@ -11,13 +11,15 @@ const path=location.pathname;
 const detail=/^\/guides\//.test(path);
 const legacySlugs={'cream-cheese.html':'cream-cheese','macarons.html':'macarons','cakes.html':'cakes','fillings.html':'fillings'};
 const fileName=path.split('/').pop();
-const slug=detail?(legacySlugs[fileName]||new URLSearchParams(location.search).get('id')||document.body.dataset.guide):null;
+const requestedSlug=detail?(legacySlugs[fileName]||new URLSearchParams(location.search).get('id')||document.body.dataset.guide):null;
+const slug=detail?(data.guides?.[requestedSlug]?requestedSlug:(data.aliases?.[requestedSlug]||requestedSlug)):null;
+if(detail&&requestedSlug!==slug&&data.guides?.[slug])history.replaceState(null,'','/guides/guide.html?id='+encodeURIComponent(slug));
 const url=(file,prefix)=>!file?'':file.startsWith('/')?file:prefix+file;
 const img=(target,file,prefix,title)=>{if(!target)return;target.replaceChildren();if(!file){target.textContent='Фото скоро появится';return;}const i=document.createElement('img');i.alt=title;i.loading='lazy';i.src=url(file,prefix);i.style.cssText='width:100%;height:100%;object-fit:cover;display:block';i.onerror=()=>{i.remove();target.textContent='Фото скоро появится';};target.append(i);target.classList.remove('photo-placeholder','no-image');target.style.display='block';};
 if(detail){const g=data.guides?.[slug];if(!g){const main=document.querySelector('main');if(main)main.innerHTML='<div class="wrap" style="padding:80px 20px"><h1>Гайд не найден</h1><a href="/#products">Вернуться ко всем гайдам</a></div>';document.body.classList.add('guide-ready');return;}
 document.body.dataset.guide=slug;document.title=g.title+' — Тата Анастасия';
 const set=(s,v)=>{const x=document.querySelector(s);if(x)x.textContent=v||'';};
-set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-hero .detail-intro',g.description);set('.detail-purchase p',g.title);document.querySelectorAll('.detail-price').forEach(x=>x.textContent=g.price);const list=document.querySelector('.detail-list');if(list){list.replaceChildren();(g.contents||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;list.append(li)})}// Первое изображение — большое фото; остальные — динамическая галерея без лимита в 3 кадра.
+set('.detail-hero .eyebrow',g.kind);set('.detail-hero h1',g.title);set('.detail-hero .detail-intro',g.description);set('.detail-purchase p',g.title);document.querySelectorAll('.detail-price').forEach(x=>x.textContent=g.price);const contentSection=document.querySelector('.detail-list')?.closest('.detail-section');if(contentSection?.querySelector('h2'))contentSection.querySelector('h2').textContent=g.contentsHeading||'Что внутри гайда';const photosSection=document.querySelector('.detail-gallery')?.closest('.detail-section');if(photosSection?.querySelector('h2'))photosSection.querySelector('h2').textContent=g.photosHeading||'Фотографии и примеры';const list=document.querySelector('.detail-list');if(list){list.replaceChildren();(g.contents||[]).forEach(x=>{const li=document.createElement('li');li.textContent=x;list.append(li)})}// Первое изображение — большое фото; остальные — динамическая галерея без лимита в 3 кадра.
 const photos=Array.isArray(g.images)?g.images.filter(Boolean):[];
 const mainPhoto=document.querySelector('.detail-hero .detail-photo');
 img(mainPhoto,photos[0],'../images/',g.title+' — главное фото');
@@ -39,7 +41,7 @@ if(gallery){
 document.body.classList.add('guide-ready');
 }else{
 const grid=document.querySelector('.card-grid');if(!grid)return;grid.replaceChildren();Object.entries(data.guides||{}).forEach(([slug,g],idx)=>{const article=document.createElement('article');article.className='recipe-card';const number=document.createElement('span');number.className='recipe-card-num';number.textContent='№ '+String(idx+1).padStart(2,'0');article.append(number);
-const link=document.createElement('a');link.className='recipe-card-media photo-placeholder';link.href=legacySlugs[slug+'.html']?'/guides/'+encodeURIComponent(slug)+'.html':'/guides/guide.html?id='+encodeURIComponent(slug);link.setAttribute('aria-label','Подробнее: '+g.title);img(link,g.images?.[0],'images/',g.title);article.append(link);
+const link=document.createElement('a');link.className='recipe-card-media photo-placeholder';link.href='/guides/guide.html?id='+encodeURIComponent(slug);link.setAttribute('aria-label','Подробнее: '+g.title);img(link,g.images?.[0],'images/',g.title);article.append(link);
 const body=document.createElement('div');body.className='recipe-card-body';const kind=document.createElement('span');kind.className='recipe-card-kind';kind.textContent=g.kind;const h=document.createElement('h3');h.textContent=g.title;const p=document.createElement('p');p.textContent=g.description;const footer=document.createElement('div');footer.className='recipe-card-footer';const price=document.createElement('span');price.className='price';price.textContent=g.price;const more=document.createElement('a');more.className='btn btn-small btn-primary';more.href=link.href;more.textContent='Подробнее';footer.append(price,more);body.append(kind,h,p,footer);article.append(body);grid.append(article);});
 }
 
